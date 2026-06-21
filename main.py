@@ -218,6 +218,17 @@ def build_human_report(reviewers, papers, conflicts, assignment, load_result, st
             lines.append(f"  (conflicts avoided: {conf_names})")
         lines.append("")
 
+    lines.extend(build_workload_section(reviewers, papers, assignment, load_result))
+    return "\n".join(lines)
+
+
+def build_workload_section(reviewers, papers, assignment, load_result):
+    """Return the REVIEWER WORKLOAD section as a list of lines.
+
+    reviewers   -> list of (email, name); load_result -> dict email -> count.
+    Shared by main.py (initial report) and assignment_sync.py (refresh).
+    """
+    lines = []
     lines.append("=" * 70)
     lines.append("REVIEWER WORKLOAD")
     lines.append("=" * 70)
@@ -231,10 +242,10 @@ def build_human_report(reviewers, papers, conflicts, assignment, load_result, st
     total = sum(load_result.values())
     lines.append(f"Total assignments: {total}")
     lines.append(f"Papers: {len(papers)}   Reviewers: {len(reviewers)}")
-    loads = list(load_result.values())
+    loads = list(load_result.values()) or [0]
     lines.append(f"Load min/max: {min(loads)}/{max(loads)}")
     lines.append("")
-    return "\n".join(lines)
+    return lines
 
 
 def build_xml(papers, assignment):

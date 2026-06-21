@@ -18,12 +18,15 @@ workload as evenly as possible across reviewers.
   everyone toward an even split.
 - Writes two timestamped result files per run: a **human-readable** report and a
   **machine-readable XML** file you can import back into CMT.
+- Lets you **hand-edit the human-readable report and sync your edits back into
+  the XML** with `assignment_sync.py`.
 
 ## Folder layout
 
 ```
 .
-├── main.py              # the tool
+├── main.py              # the assignment tool
+├── assignment_sync.py   # sync hand-edited .txt reports back into .xml
 ├── CMT_files/           # <-- you put the three CMT exports here
 │   ├── Reviewers.txt
 │   ├── Papers.txt
@@ -138,6 +141,55 @@ Each run writes **two timestamped files** into the **`assignment/`** folder
 
 The full report is also printed to the terminal, ending with the two output
 paths.
+
+## Editing assignments by hand
+
+The auto-generated assignment is a starting point — you will often want to
+tweak it manually (swap a reviewer, add or drop one). Do this on the
+**human-readable `.txt`** report, then sync your edits into the XML:
+
+1. Open an `assignment_<timestamp>.txt` file and edit the reviewer lines under
+   any paper. A reviewer line looks like:
+
+   ```
+       - Alice Anderson <alice@example.com>
+   ```
+
+   Only the email inside the angle brackets `< >` matters — add, remove, or
+   change these lines freely. The name text is for your convenience and is
+   ignored. Leave the `Paper <id>:` headings intact (the id is what links a
+   block to its submission). You don't need to keep the per-paper
+   `Reviewers (N):` count or the `REVIEWER WORKLOAD` section in sync by hand —
+   the next step recomputes them.
+
+2. Run the sync tool:
+
+   ```bash
+   .venv/bin/python assignment_sync.py
+   ```
+
+   For every `assignment_*.txt` in the `assignment/` folder, it:
+   - **refreshes the `.txt` in place** — recomputing each paper's
+     `Reviewers (N):` count and the whole `REVIEWER WORKLOAD` stats section
+     (per-reviewer loads, totals, min/max) from your edited assignment lines, and
+   - **regenerates the matching `.xml`** so the machine-readable file reflects
+     your edits.
+
+   The reviewer assignment lines are the source of truth; the workload stats and
+   the `.xml` are recomputed from them. Running it twice in a row changes nothing
+   the second time.
+
+   To sync only specific files, or a different folder:
+
+   ```bash
+   .venv/bin/python assignment_sync.py assignment/assignment_20260101-120000.txt
+   .venv/bin/python assignment_sync.py --output path/to/results
+   ```
+
+> Note: `assignment_sync.py` does **not** re-check conflicts or workload
+> balance — it faithfully reflects whatever you put in the `.txt`. It is purely
+> a manual-override tool. To get a fresh conflict-free, balanced assignment,
+> re-run `main.py` instead.
 
 ## Tuning
 
